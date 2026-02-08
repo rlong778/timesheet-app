@@ -31,6 +31,7 @@ class TimesheetPDFGenerator:
                 - weekly_summary: str (AI-generated summary)
             output_path: Where to save the filled PDF
         """
+        from datetime import datetime, timedelta
         
         # Check if template exists
         if not os.path.exists(self.template_path):
@@ -53,6 +54,9 @@ class TimesheetPDFGenerator:
         field_values["Student Name"] = data['student_name']
         field_values["GT ID"] = data['gt_id']
         
+        # Get the week start date to calculate all day dates
+        week_start = datetime.strptime(data['week_start'], '%Y-%m-%d')
+        
         # Map day entries to the 5 rows (PDF only has 5 rows)
         # We'll fill Monday-Friday
         days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -66,20 +70,24 @@ class TimesheetPDFGenerator:
             day_name = day_text.split(',')[0].strip() if ',' in day_text else day_text
             entry_map[day_name] = entry
         
-        # Fill the 5 rows
-        for i, day_name in enumerate(days_of_week, 1):
-            row_num = i
+        # Fill the 5 rows - ALWAYS include dates for all days
+        for i, day_name in enumerate(days_of_week):
+            row_num = i + 1
+            
+            # Calculate the actual date for this day of the week
+            day_date = week_start + timedelta(days=i)
+            day_with_date = f"{day_name} - {day_date.strftime('%m/%d')}"
             
             if day_name in entry_map:
                 entry = entry_map[day_name]
-                # Use the full day format from the entry (e.g., "Monday, January 5")
-                field_values[f"DayRow{row_num}"] = entry['day']
+                # Use day name with date (e.g., "Monday - 02/03")
+                field_values[f"DayRow{row_num}"] = day_with_date
                 field_values[f"Time InRow{row_num}"] = entry.get('time_in', '')
                 field_values[f"Time OutRow{row_num}"] = entry.get('time_out', '')
                 field_values[f"Mentor InitialsRow{row_num}"] = entry.get('mentor_initials', '')
             else:
-                # Leave blank if no data for this day
-                field_values[f"DayRow{row_num}"] = day_name
+                # Still show the day with date, but leave times blank
+                field_values[f"DayRow{row_num}"] = day_with_date
                 field_values[f"Time InRow{row_num}"] = ''
                 field_values[f"Time OutRow{row_num}"] = ''
                 field_values[f"Mentor InitialsRow{row_num}"] = ''
@@ -172,9 +180,13 @@ class EnhancedTimesheetGenerator:
         """Create a complete timesheet PDF matching the template"""
         from reportlab.pdfgen import canvas
         from reportlab.lib.pagesizes import letter
+        from datetime import datetime, timedelta
         
         c = canvas.Canvas(output_path, pagesize=letter)
         width, height = letter
+        
+        # Get the week start date
+        week_start = datetime.strptime(data['week_start'], '%Y-%m-%d')
         
         # Title
         c.setFont("Helvetica-Bold", 16)
@@ -224,7 +236,7 @@ class EnhancedTimesheetGenerator:
         c.setLineWidth(1)
         c.line(72, y_pos, 570, y_pos)
         
-        # Table rows - only 5 rows (Monday-Friday)
+        # Table rows - only 5 rows (Monday-Friday) with dates
         c.setFont("Helvetica", 10)
         y_pos -= 20
         row_height = 22
@@ -232,10 +244,17 @@ class EnhancedTimesheetGenerator:
         days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         entry_map = {}
         for entry in data.get('daily_entries', []):
-            entry_map[entry['day']] = entry
+            day_text = entry['day']
+            # Extract just the day name (before the comma if present)
+            day_name = day_text.split(',')[0].strip() if ',' in day_text else day_text
+            entry_map[day_name] = entry
         
-        for day_name in days_of_week:
-            c.drawString(72, y_pos, day_name)
+        for i, day_name in enumerate(days_of_week):
+            # Calculate the actual date for this day
+            day_date = week_start + timedelta(days=i)
+            day_with_date = f"{day_name} - {day_date.strftime('%m/%d')}"
+            
+            c.drawString(72, y_pos, day_with_date)
             
             if day_name in entry_map:
                 entry = entry_map[day_name]

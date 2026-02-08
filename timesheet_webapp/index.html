@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Timesheet Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .user-info input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .user-info input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .user-info button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .user-info button:hover {
+            background: #5568d3;
+        }
+
+        .content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .activity-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .week-view {
+            display: grid;
+            gap: 20px;
+        }
+
+        .day-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .day-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-card .hours-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .activity-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .activity-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .activity-item .text {
+            flex: 1;
+            color: #333;
+        }
+
+        .activity-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .week-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .week-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .week-item .info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .week-item .info .meta {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .week-item .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .week-item {
+                flex-direction: column;
+                gap: 15px;
+                align-items: start;
+            }
+
+            .week-item .actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Lab Timesheet Tracker</h1>
+            <p class="subtitle">Track your lab hours and generate professional timesheets</p>
+            
+            <div class="user-info" id="userInfoSection">
+                <h3 style="margin-bottom: 15px;">Student Information</h3>
+                <input type="text" id="studentName" placeholder="Full Name">
+                <input type="text" id="gtId" placeholder="GT ID (e.g., 903123456)">
+                <button onclick="saveUserInfo()">💾 Save Information</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('current')">📅 Current Week</button>
+                <button class="tab" onclick="switchTab('past')">📚 Past Weeks</button>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Current Week Tab -->
+            <div id="currentTab" class="tab-content active">
+                <div class="activity-form">
+                    <h3 style="margin-bottom: 15px;">➕ Log Activity</h3>
+                    <form onsubmit="addActivity(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="activityDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hours (optional)</label>
+                                <input type="number" id="activityHours" step="0.5" min="0" placeholder="3.5">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Activity Description</label>
+                            <textarea id="activityText" placeholder="Describe what you worked on..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">✅ Add Activity</button>
+                    </form>
+                </div>
+
+                <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                    <button class="btn" onclick="generateCurrentTimesheet()">📄 Generate Timesheet</button>
+                    <button class="btn btn-danger" onclick="clearCurrentWeek()">🗑️ Clear Week</button>
+                </div>
+
+                <div id="currentWeekView" class="week-view"></div>
+            </div>
+
+            <!-- Past Weeks Tab -->
+            <div id="pastTab" class="tab-content">
+                <div id="pastWeeksView" class="week-list"></div>
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentWeekData = null;
+        let allWeeks = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadCurrentWeek();
+            setDefaultDate();
+        });
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('activityDate').value = today;
+        }
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                if (data.name) {
+                    document.getElementById('studentName').value = data.name;
+                    document.getElementById('gtId').value = data.gt_id;
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        async function saveUserInfo() {
+            const name = document.getElementById('studentName').value.trim();
+            const gtId = document.getElementById('gtId').value.trim();
+
+            if (!name || !gtId) {
+                showAlert('Please fill in both name and GT ID', 'error');
+                return;
+            }
+
+            try {
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, gt_id: gtId })
+                });
+                showAlert('✅ Information saved!', 'success');
+            } catch (error) {
+                showAlert('Error saving information', 'error');
+            }
+        }
+
+        async function loadCurrentWeek() {
+            try {
+                const response = await fetch('/api/current-week');
+                currentWeekData = await response.json();
+                renderCurrentWeek();
+            } catch (error) {
+                console.error('Error loading week:', error);
+            }
+        }
+
+        async function loadPastWeeks() {
+            try {
+                const response = await fetch('/api/weeks');
+                allWeeks = await response.json();
+                renderPastWeeks();
+            } catch (error) {
+                console.error('Error loading past weeks:', error);
+            }
+        }
+
+        function renderCurrentWeek() {
+            const container = document.getElementById('currentWeekView');
+            
+            if (!currentWeekData || currentWeekData.days.every(d => d.activities.length === 0)) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3>No activities logged yet</h3>
+                        <p>Start by logging your first lab activity above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = currentWeekData.days
+                .filter(day => day.activities.length > 0)
+                .map(day => `
+                    <div class="day-card">
+                        <h3>
+                            <span>${day.day_name}, ${day.display_date}</span>
+                            ${day.total_hours > 0 ? `<span class="hours-badge">${day.total_hours}h</span>` : ''}
+                        </h3>
+                        <ul class="activity-list">
+                            ${day.activities.map((act, idx) => `
+                                <li class="activity-item">
+                                    <div class="text">${act.activity}</div>
+                                    <div class="actions">
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="deleteActivity('${currentWeekData.week_key}', '${day.date}', ${idx})">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function renderPastWeeks() {
+            const container = document.getElementById('pastWeeksView');
+            
+            if (allWeeks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No past weeks yet</h3>
+                        <p>Past weeks will appear here once you complete your first week</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = allWeeks.map(week => `
+                <div class="week-item">
+                    <div class="info">
+                        <h3>Week of ${week.display_date}</h3>
+                        <div class="meta">
+                            ${week.total_hours > 0 ? `${week.total_hours.toFixed(1)} hours` : '0 hours'} • 
+                            ${week.total_entries} ${week.total_entries === 1 ? 'entry' : 'entries'}
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-sm" onclick="generatePastTimesheet('${week.week_key}')">
+                            📄 Generate PDF
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePastWeek('${week.week_key}')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function addActivity(event) {
+            event.preventDefault();
+            
+            const date = document.getElementById('activityDate').value;
+            const hours = parseFloat(document.getElementById('activityHours').value) || null;
+            const activity = document.getElementById('activityText').value.trim();
+
+            if (!activity) return;
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/activity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date, activity, hours })
+                });
+
+                if (response.ok) {
+                    showAlert('✅ Activity added!', 'success');
+                    document.getElementById('activityText').value = '';
+                    document.getElementById('activityHours').value = '';
+                    await loadCurrentWeek();
+                }
+            } catch (error) {
+                showAlert('Error adding activity', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteActivity(weekKey, date, index) {
+            if (!confirm('Delete this activity?')) return;
+
+            try {
+                const response = await fetch('/api/activity/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ week_key: weekKey, date, index })
+                });
+
+                if (response.ok) {
+                    showAlert('✅ Activity deleted', 'success');
+                    await loadCurrentWeek();
+                }
+            } catch (error) {
+                showAlert('Error deleting activity', 'error');
+            }
+        }
+
+        async function clearCurrentWeek() {
+            if (!confirm('Clear all activities for this week? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch('/api/week/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ week_key: currentWeekData.week_key })
+                });
+
+                if (response.ok) {
+                    showAlert('✅ Week cleared', 'success');
+                    await loadCurrentWeek();
+                }
+            } catch (error) {
+                showAlert('Error clearing week', 'error');
+            }
+        }
+
+        async function deletePastWeek(weekKey) {
+            if (!confirm('Delete this week? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch('/api/week/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ week_key: weekKey })
+                });
+
+                if (response.ok) {
+                    showAlert('✅ Week deleted', 'success');
+                    await loadPastWeeks();
+                }
+            } catch (error) {
+                showAlert('Error deleting week', 'error');
+            }
+        }
+
+        async function generateCurrentTimesheet() {
+            showLoading(true);
+            try {
+                window.location.href = `/api/generate-timesheet/${currentWeekData.week_key}`;
+                showAlert('✅ Timesheet generated! Check your downloads.', 'success');
+            } catch (error) {
+                showAlert('Error generating timesheet', 'error');
+            } finally {
+                setTimeout(() => showLoading(false), 2000);
+            }
+        }
+
+        async function generatePastTimesheet(weekKey) {
+            showLoading(true);
+            try {
+                window.location.href = `/api/generate-timesheet/${weekKey}`;
+                showAlert('✅ Timesheet generated! Check your downloads.', 'success');
+            } catch (error) {
+                showAlert('Error generating timesheet', 'error');
+            } finally {
+                setTimeout(() => showLoading(false), 2000);
+            }
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'current') {
+                document.getElementById('currentTab').classList.add('active');
+            } else {
+                document.getElementById('pastTab').classList.add('active');
+                loadPastWeeks();
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        function showLoading(show) {
+            const indicator = document.getElementById('loadingIndicator');
+            indicator.classList.toggle('show', show);
+        }
+    </script>
+</body>
+</html>

@@ -14,15 +14,16 @@ from pdf_generator import TimesheetPDFGenerator
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# File to store activities
-ACTIVITIES_FILE = 'lab_activities.json'
-CONFIG_FILE = 'config.json'
+# File to store activities - absolute path so data always saves next to this script
+ACTIVITIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lab_activities.json')
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
 class TimesheetManager:
     def __init__(self):
         self.load_config()
         self.anthropic_client = anthropic.Anthropic(api_key=self.config['anthropic_api_key'])
-        self.pdf_generator = TimesheetPDFGenerator('Updated_Weekly_Timesheet__2_.pdf')
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Updated_Weekly_Timesheet__2_.pdf')
+        self.pdf_generator = TimesheetPDFGenerator(template_path)
     
     def load_config(self):
         """Load configuration"""
@@ -164,8 +165,8 @@ class TimesheetManager:
                 return True
         return False
     
-    async def generate_ai_summary(self, week_data):
-        """Generate AI summary of weekly activities"""
+    def generate_ai_summary(self, week_data):
+        """Generate AI summary of weekly activities - fully synchronous, no asyncio needed"""
         all_activities = []
         for date, activities in sorted(week_data.items()):
             date_obj = datetime.strptime(date, '%Y-%m-%d')
@@ -175,8 +176,9 @@ class TimesheetManager:
         
         activities_text = "\n".join(all_activities)
         
+        # Synchronous Anthropic call - works directly in Flask, no asyncio needed
         message = self.anthropic_client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=1000,
             messages=[{
                 "role": "user",
@@ -200,13 +202,11 @@ Write a cohesive paragraph suitable for a weekly timesheet report."""
         
         week_data = activities[week_key]
         
-        # Generate AI summary (synchronous version)
-        import asyncio
+        # Generate AI summary - direct call, no asyncio wrapper needed
         try:
-            summary = asyncio.run(self.generate_ai_summary(week_data))
-        except:
-            # Fallback to basic summary
-            summary = "Weekly lab activities completed as scheduled."
+            summary = self.generate_ai_summary(week_data)
+        except Exception as e:
+            return None, f"AI summary failed: {str(e)}"
         
         # Prepare timesheet data
         timesheet_data = {
@@ -241,7 +241,7 @@ Write a cohesive paragraph suitable for a weekly timesheet report."""
                 })
         
         # Generate PDF
-        output_path = f"timesheet_{week_key}.pdf"
+        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"timesheet_{week_key}.pdf")
         try:
             self.pdf_generator.create_timesheet(timesheet_data, output_path)
             return output_path, summary
